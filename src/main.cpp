@@ -15,11 +15,16 @@
 // ----------------------------------------------------------------------------
 // Definition of macros
 // ----------------------------------------------------------------------------
-
-#define LED_PIN   26
-#define BTN_PIN   22
+#define SETOR "TESTE" // cada placa esp32 deve receber a sua identifição de setor.
+#define NB_BUTTONS 2
+#define ACFAIL_PIN 13
+#define LOWBAT_PIN 15
+#define LED_PIN   14
+#define BTN_PIN   27
 #define HTTP_PORT 80
-
+IPAddress ip(192, 168, 137, 35); // cada placa esp32 deve receber o seu proprio IP.
+IPAddress gateway(192, 168, 137, 1);
+IPAddress subnet(255, 255, 0, 0);
 // ----------------------------------------------------------------------------
 // Definition of global constants
 // ----------------------------------------------------------------------------
@@ -98,12 +103,23 @@ struct Button {
 // ----------------------------------------------------------------------------
 
 Led    onboard_led = { LED_BUILTIN, false };
-Led    led         = { LED_PIN, false };
-Button button      = { BTN_PIN, HIGH, 0, 0 };
+//Led    led         = { LED_PIN, false };
+Led led[] = {
+    { LED_PIN, false }
+};
+//Button button      = { BTN_PIN, HIGH, 0, 0 };
+Button button[] = {
+    { BTN_PIN, HIGH, 0, 0 },
+    { ACFAIL_PIN, HIGH, 0, 0 },
+    { LOWBAT_PIN, HIGH, 0, 0 }
+};
 
 AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
-
+bool acReconhecido = 0;
+bool lowReconhecido = 0;
+bool acSave = 0;
+bool lowSave = 0;
 // ----------------------------------------------------------------------------
 // SPIFFS initialization
 // ----------------------------------------------------------------------------
@@ -125,6 +141,7 @@ void initSPIFFS() {
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
+  WiFi.config(ip, gateway, subnet); //implementado para IP FIXO//
   Serial.printf("Trying to connect [%s] ", WiFi.macAddress().c_str());
   while (WiFi.status() != WL_CONNECTED) {
       Serial.print(".");
@@ -138,11 +155,15 @@ void initWiFi() {
 // ----------------------------------------------------------------------------
 
 String processor(const String &var) {
-    return String(var == "STATE" && led.on ? "on" : "off");
+    //Preciso descobrir como fazer funcionar com meu codigo atual,
+    //enquanto isso utilizo o JavaScript para solicitar o primeiro status.    
+    //return String(var == "STATE" && led[1].on ? "on" : "off");
+    return "null";
 }
 
 void onRootRequest(AsyncWebServerRequest *request) {
-  request->send(SPIFFS, "/index.html", "text/html", false, processor);
+  //request->send(SPIFFS, "/index.html", "text/html", false, processor);
+  request->send(SPIFFS, "/index.html", "text/html", false);
 }
 
 void initWebServer() {
@@ -155,14 +176,59 @@ void initWebServer() {
 // WebSocket initialization
 // ----------------------------------------------------------------------------
 
-void notifyClients() {
-    const uint8_t size = JSON_OBJECT_SIZE(1);
-    StaticJsonDocument<size> json;
-    json["status"] = led.on ? "on" : "off";
+void notifyClients() {    
+    const String JSON_AC = "acfail";
+    const String JSON_LOW = "lowbat";
+    const String NORMAL  = "Normal";
+    const String RECONHECIDO  = "Reconhecido";
+    const String FALHA = "Falha"; 
+    const String LOG = "log";
+    const String LOCAL = "local";
+    const String LOG_DATA = "ld";
+    const String LOG_HORA = "lh";
+    const String LOG_MSG = "lm";
+    const uint8_t NB_LOGS = 5;
 
-    char buffer[17];
-    size_t len = serializeJson(json, buffer);
-    ws.textAll(buffer, len);
+    //const uint16_t size = JSON_OBJECT_SIZE(1);
+    const uint16_t size = 512;
+    StaticJsonDocument<size> json;
+
+    json[LOCAL] = SETOR;
+
+  if(acSave != 1){
+    json[JSON_AC] = NORMAL;
+        acReconhecido = 0;
+    }
+    else if(acReconhecido){
+        json[JSON_AC] = RECONHECIDO;
+    }
+    else{
+      json[JSON_AC] = FALHA;
+      }
+  
+  if(lowSave){
+        json[JSON_LOW] = NORMAL;
+        lowReconhecido = 0;
+    }
+    else if(lowReconhecido){
+        json[JSON_LOW] = RECONHECIDO;
+    }
+    else{
+      json[JSON_LOW] = FALHA;
+      }
+
+  for(uint8_t i = 0; i <= NB_LOGS; i++ ){
+    String posicao = String(i);      
+    json[LOG][LOG_DATA + posicao] = ""; //"10/09/2021";
+    json[LOG][LOG_HORA + posicao] = ""; //"15:58:00";
+    json[LOG][LOG_MSG + posicao] = "";  //"LOW-BATTERY Normalizado.";
+  } 
+
+  char buffer[size];
+  size_t len = serializeJson(json, buffer);
+  //Serial.println(len);
+  //Serial.println(buffer); 
+  ws.textAll(buffer, len);
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
@@ -179,8 +245,13 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         }
 
         const char *action = json["action"];
-        if (strcmp(action, "toggle") == 0) {
-            led.on = !led.on;
+        if(strcmp(action, "obterleitura") == 0) {
+            notifyClients();
+        }else if(strcmp(action, "reconhecerAcfail") == 0) {
+            acReconhecido = 1;
+            notifyClients();
+        }else if(strcmp(action, "reconhecerLowbat") == 0) {
+            lowReconhecido = 1;
             notifyClients();
         }
 
@@ -215,14 +286,31 @@ void initWebSocket() {
     server.addHandler(&ws);
 }
 
+void leitura() {  
+    
+    static unsigned long previousMillis_pisca = millis();
+    uint8_t intervalo_pisca = 250;
+  if (millis() - previousMillis_pisca >= intervalo_pisca)  {
+    previousMillis_pisca = millis();
+    if(digitalRead(ACFAIL_PIN) != acSave){
+        acSave = !acSave;
+        notifyClients();
+    }
+    if (digitalRead(LOWBAT_PIN) != lowSave){
+        lowSave = !lowSave;
+        notifyClients();
+    }
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Initialization
 // ----------------------------------------------------------------------------
 
 void setup() {
     pinMode(onboard_led.pin, OUTPUT);
-    pinMode(led.pin,         OUTPUT);
-    pinMode(button.pin,      INPUT);
+    pinMode(ACFAIL_PIN, INPUT_PULLUP);
+    pinMode(LOWBAT_PIN, INPUT_PULLUP);
 
     Serial.begin(115200); delay(500);
 
@@ -236,18 +324,10 @@ void setup() {
 // Main control loop
 // ----------------------------------------------------------------------------
 
-void loop() {
+void loop(){
     ws.cleanupClients();
-
-    button.read();
-
-    if (button.pressed()) {
-        led.on = !led.on;
-        notifyClients();
-    }
-    
+    leitura();
     onboard_led.on = millis() % 1000 < 50;
-
-    led.update();
+    //led.update();
     onboard_led.update();
 }

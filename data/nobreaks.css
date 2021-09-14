@@ -1,0 +1,46 @@
+html,   body {
+			margin: 0px;
+			padding: 0px;
+			width: 100%;
+			height: 100%
+		}
+
+		.quadros {
+			margin: 0px;
+			padding: 0px;
+			width: calc(25%);
+			height: calc(90%/4);
+			float: left;
+		}
+
+		.titulo {			
+			color: #000000;
+			margin: 0px;
+			padding: 0px;
+			border: 0px;
+			width: calc(100%);
+			height: calc(10%);
+			float: left;
+			background: #38CE18;
+            background: -moz-linear-gradient(top, #6ada52 0%, #4cd32f 66%, #38CE18 100%);
+            background: -webkit-linear-gradient(top, #6ada52 0%, #4cd32f 66%, #38CE18 100%);
+            background: linear-gradient(to bottom, #6ada52 0%, #4cd32f 66%, #38CE18 100%);			
+		}
+		
+		.quadros iframe {
+			width: 100%;
+			height: 100%;
+			border: 0px;
+			margin: 0px;
+			padding: 0px;
+			float: left;
+			height: calc(100%);
+		}
+
+		div {
+			text-align: center;
+		}
+		h2 {
+            font-size: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }

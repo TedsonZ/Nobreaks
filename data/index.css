@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------------
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+
 * {
   margin: 0;
   padding: 0;
@@ -16,10 +16,12 @@
 }
 
 html, body {
+  background-color: #7add67;
   height: 100%;
-  font-family: Roboto, sans-serif;
-  font-size: 12pt;
+  font-family: sans-serif;
+  font-size: 10pt;
   overflow: hidden;
+  font-weight: bold;
 }
 
 body {
@@ -39,34 +41,16 @@ h1 {
   font-size: 1.5rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
-
-#led {
-  position: relative;
-  width: 5em;
-  height: 5em;
-  border: 2px solid #000;
-  border-radius: 2.5em;
-  background-image: radial-gradient(farthest-corner at 50% 20%, #b30000 0%, #330000 100%);
-  box-shadow: 0 0.5em 1em rgba(102, 0, 0, 0.3);
-}
-#led.on {
-  background-image: radial-gradient(farthest-corner at 50% 75%, red 0%, #990000 100%);
-  box-shadow: 0 1em 1.5em rgba(255, 0, 0, 0.5);
-}
-#led:after {
-  content: '';
-  position: absolute;
-  top: .3em;
-  left: 1em;
-  width: 60%;
-  height: 40%;
-  border-radius: 60%;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+div {
+  background-color: #3CDD1AB4;
+  box-shadow: 0px 1px 15px 5px #3CDD1A;
+  justify-content: center;
+  align-items: center;
 }
 
 button {
-  padding: .5em .75em;
-  font-size: 1.2rem;
+  padding: 0.1em 0.1em;
+  font-size: 1rem;
   color: #fff;
   text-shadow: 0 -1px 1px #000;
   border: 1px solid #000;
@@ -78,3 +62,47 @@ button {
 button:active {
   transform: translateY(2px);
 }
+
+.btn {
+  padding: 0.1em 0.1em;
+  font-size: 1rem;
+  color: #fff;
+  text-shadow: 0 -1px 1px #000;
+  border: 1px solid #000;
+  border-radius: .5em;
+  background-image: linear-gradient(#2e3538, #73848c);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), 0 0.2em 0.4em rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+.btn:active {
+  transform: translateY(2px);
+}
+
+table.tabela1 {
+  background-color: #4EFF4C;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+}
+table.tabela1 td, table.tabela1 th {
+  font-weight: bold;
+}
+table.tabela1 tbody td {
+  justify-content: center;
+  align-items: center;
+  font-size: 13px;
+ 
+  white-space: nowrap;
+}
+table.tabela1 thead {
+  background: #3CDD1A;
+  background: -moz-linear-gradient(top, #6de553 0%, #4fe031 66%, #3CDD1A 100%);
+  background: -webkit-linear-gradient(top, #6de553 0%, #4fe031 66%, #3CDD1A 100%);
+  background: linear-gradient(to bottom, #6de553 0%, #4fe031 66%, #3CDD1A 100%);
+}
+table.tabela1 thead th {
+  font-size: 15px;
+  text-align: left;
+  white-space: nowrap;
+}
+
