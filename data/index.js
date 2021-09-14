@@ -109,7 +109,7 @@ function initButton() {
 }
 
 function clickacfail(event) {
-    websocket.send(JSON.stringify({'action':'reconheceracfail'}));
+    websocket.send(JSON.stringify({'action':'reconhecerAcfail'}));
 }
 function clickLowbat(event) {
     websocket.send(JSON.stringify({'action':'reconhecerLowbat'}));
