@@ -107,8 +107,8 @@ function onMessage(event) {
         document.getElementById("bt_low").style.display = "none";
         alarmeLow = 0;
     }
-//console.log(alarmeAc);
-//console.log(alarmeLow);
+    //console.log(alarmeAc);
+    //console.log(alarmeLow);
 }
 // ----------------------------------------------------------------------------
 // Button handling
