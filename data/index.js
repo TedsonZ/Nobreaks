@@ -107,8 +107,8 @@ function onMessage(event) {
         document.getElementById("bt_low").style.display = "none";
         alarmeLow = 0;
     }
-console.log(alarmeAc);
-console.log(alarmeLow);
+//console.log(alarmeAc);
+//console.log(alarmeLow);
 }
 // ----------------------------------------------------------------------------
 // Button handling
@@ -136,7 +136,7 @@ let i = 1;
 setInterval(function run() {
     if (alarmeAc === 1 || alarmeLow === 1) {
         let resto = i % 2;
-        console.log(resto);
+        //console.log(resto);
         if (resto) {
             context = new AudioContext();
             oscillator = context.createOscillator();
@@ -144,10 +144,10 @@ setInterval(function run() {
             oscillator.connect(context.destination);
             oscillator.start();
             play = 1;
-            console.log("Play");
+            //console.log("Play");
         } else {
             oscillator.stop(context.currentTime + 0);
-            console.log("Pause");
+            //console.log("Pause");
         }
         i++
     } else {
@@ -158,11 +158,11 @@ setInterval(function run() {
     }
 }, 1000);
 
-setTimeout(() => {
+setInterval(() => {
     websocket.send(JSON.stringify({ 'action': 'obterleitura' }));
-    datacao();
+    //datacao();
     //ocultar();
-}, 2000);
+}, 20000);
 
 function ler() {
     websocket.send(JSON.stringify({ 'action': 'obterleitura' }));
