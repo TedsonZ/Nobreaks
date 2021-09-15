@@ -15,16 +15,17 @@
 // ----------------------------------------------------------------------------
 // Definition of macros
 // ----------------------------------------------------------------------------
-#define SETOR "TESTE" // cada placa esp32 deve receber a sua identifição de setor.
 #define NB_BUTTONS 2
 #define ACFAIL_PIN 13
 #define LOWBAT_PIN 15
-#define LED_PIN   14
+#define LEDWIFI_PIN 14
 #define BTN_PIN   27
 #define HTTP_PORT 80
-IPAddress ip(192, 168, 137, 35); // cada placa esp32 deve receber o seu proprio IP.
-IPAddress gateway(192, 168, 137, 1);
-IPAddress subnet(255, 255, 0, 0);
+
+//-----------------------------------------------------------------------------
+//Funções
+//-----------------------------------------------------------------------------
+void checkWifi();
 // ----------------------------------------------------------------------------
 // Definition of global constants
 // ----------------------------------------------------------------------------
@@ -33,9 +34,10 @@ IPAddress subnet(255, 255, 0, 0);
 const uint8_t DEBOUNCE_DELAY = 10; // in milliseconds
 
 // WiFi credentials
-const char *WIFI_SSID = "YOUR_WIFI_SSID";
-const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
-
+const char *WIFI_SSID = "VIA";
+const char *WIFI_PASS = "123456789";
+const char *SETOR = "ITR"; // cada placa esp32 deve receber a sua identifição de setor.
+uint8_t IP4 = 39;
 // ----------------------------------------------------------------------------
 // Definition of the LED component
 // ----------------------------------------------------------------------------
@@ -105,7 +107,7 @@ struct Button {
 Led    onboard_led = { LED_BUILTIN, false };
 //Led    led         = { LED_PIN, false };
 Led led[] = {
-    { LED_PIN, false }
+    { LEDWIFI_PIN, false }
 };
 //Button button      = { BTN_PIN, HIGH, 0, 0 };
 Button button[] = {
@@ -138,16 +140,18 @@ void initSPIFFS() {
 // Connecting to the WiFi network
 // ----------------------------------------------------------------------------
 
-void initWiFi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  WiFi.config(ip, gateway, subnet); //implementado para IP FIXO//
-  Serial.printf("Trying to connect [%s] ", WiFi.macAddress().c_str());
-  while (WiFi.status() != WL_CONNECTED) {
-      Serial.print(".");
-      delay(500);
-  }
-  Serial.printf(" %s\n", WiFi.localIP().toString().c_str());
+void initWiFi()
+{
+    IPAddress ip(192, 168, 137, IP4); // cada placa esp32 deve receber o seu proprio IP.
+    IPAddress gateway(192, 168, 137, 1);
+    IPAddress subnet(255, 255, 0, 0);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    WiFi.config(ip, gateway, subnet); //implementado para IP FIXO//
+    Serial.printf("Trying to connect [%s] ", WiFi.macAddress().c_str());
+    checkWifi();
+    Serial.printf(".%s_", SETOR);
+    Serial.printf("%s\n", WiFi.localIP().toString().c_str());    
 }
 
 // ----------------------------------------------------------------------------
@@ -286,7 +290,7 @@ void initWebSocket() {
     server.addHandler(&ws);
 }
 
-void leitura() {  
+void checkPins() {  
     
     static unsigned long previousMillis_pisca = millis();
     uint8_t intervalo_pisca = 250;
@@ -303,12 +307,48 @@ void leitura() {
   }
 }
 
+void checkWifi()
+{
+    static uint8_t i = 0;
+    const uint8_t ii = 30;
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+        digitalWrite(LEDWIFI_PIN, HIGH);
+    }
+    else
+    {
+        digitalWrite(LEDWIFI_PIN, LOW);
+        while (WiFi.status() != WL_CONNECTED)
+        {
+            delay(500);
+            Serial.print(".");
+            if (i > ii)
+            {
+                ESP.restart();
+            }
+            i++;
+        }
+    }
+}
+
+void checkCustomers()
+{
+    static unsigned long previousMillis = millis();
+    const uint8_t interval = 250;
+    if (millis() - previousMillis >= interval)
+    {
+        ws.cleanupClients();
+        previousMillis = millis();
+    }
+}
+
 // ----------------------------------------------------------------------------
 // Initialization
 // ----------------------------------------------------------------------------
 
 void setup() {
     pinMode(onboard_led.pin, OUTPUT);
+    pinMode(LEDWIFI_PIN, OUTPUT);
     pinMode(ACFAIL_PIN, INPUT_PULLUP);
     pinMode(LOWBAT_PIN, INPUT_PULLUP);
 
@@ -324,10 +364,11 @@ void setup() {
 // Main control loop
 // ----------------------------------------------------------------------------
 
-void loop(){
-    ws.cleanupClients();
-    leitura();
+void loop()
+{
+    checkCustomers();
+    checkPins();
     onboard_led.on = millis() % 1000 < 50;
-    //led.update();
     onboard_led.update();
+    checkWifi();
 }
